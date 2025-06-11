@@ -1,0 +1,53 @@
+baseURL = "/"
+languageCode = "en-us"
+title = "{{ .SiteName }}"
+theme = "hugo-business-theme"
+
+[params]
+  description = "{{ .SiteDescription }}"
+  phone = "+1 (555) 123-4567"
+  email = "contact@example.com"
+  address = "123 Business Street, City, Country"
+  
+  # Hero section
+  [params.hero]
+    enable = true
+    title = "Welcome to {{ .SiteName }}"
+    subtitle = "{{ .SiteDescription }}"
+    
+  # Services section
+  [params.services]
+    enable = true
+    title = "Our Services"
+    
+  # About section
+  [params.about]
+    enable = true
+    title = "About Us"
+    
+  # Contact section
+  [params.contact]
+    enable = true
+    title = "Contact Us"
+
+[menu]
+  [[menu.main]]
+    identifier = "home"
+    name = "Home"
+    url = "/"
+    weight = 1
+  [[menu.main]]
+    identifier = "services"
+    name = "Services"
+    url = "/services/"
+    weight = 2
+  [[menu.main]]
+    identifier = "about"
+    name = "About"
+    url = "/about/"
+    weight = 3
+  [[menu.main]]
+    identifier = "contact"
+    name = "Contact"
+    url = "/contact/"
+    weight = 4

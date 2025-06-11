@@ -1,0 +1,59 @@
+# Environment variables
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+venv/
+.venv/
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# Generated sites and uploads
+volumes/generated_sites/*
+volumes/ollama_models/*
+volumes/user_uploads/*
+!volumes/generated_sites/.gitkeep
+!volumes/ollama_models/.gitkeep
+!volumes/user_uploads/.gitkeep
+
+# Hugo
+public/
+resources/
+.hugo_build.lock
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# System files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Log files
+*.log
+logs/
