@@ -2,19 +2,15 @@ version: '3.8'
 
 services:
   frontend:
-    build: 
-      context: ./ai-hugo-frontend
+    build:
+      context: ./react-frontend
       dockerfile: Dockerfile
     ports:
-      - "8501:8501"
+      - "3000:3000"
     environment:
-      - BACKEND_URL=http://backend:8000
-      - STREAMLIT_SERVER_ADDRESS=0.0.0.0
-      - STREAMLIT_SERVER_PORT=8501
+      - REACT_APP_API_URL=http://43.192.149.110:8000
     depends_on:
       - backend
-    volumes:
-      - ./volumes/user_uploads:/app/uploads
     networks:
       - hugo-network
 
@@ -32,6 +28,7 @@ services:
       - ollama
     volumes:
       - ./volumes/generated_sites:/app/generated_sites
+      - ./volumes/database:/app/data
     networks:
       - hugo-network
 
