@@ -2,7 +2,7 @@
 
 **AI-Powered Hugo Static Site Generator with Local LLM Integration**
 
-A comprehensive, containerized solution that combines Hugo static site generation with AI-powered content creation using local LLMs. Users can input requirements through a beautiful Streamlit interface, and the system generates complete Hugo websites with AI-generated content.
+A comprehensive, containerized solution that combines Hugo static site generation with AI-powered content creation using local LLMs. Users can input requirements through a beautiful single-page web interface, and the system generates complete Hugo websites with AI-generated content.
 
 ## ✨ Key Features
 
@@ -20,7 +20,7 @@ A comprehensive, containerized solution that combines Hugo static site generatio
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
 │   Frontend      │    │    Backend      │    │   LLM Service   │
-│  (Streamlit)    │◄──►│   (FastAPI)     │◄──►│    (Ollama)     │
+│ (HTML/JS/CSS)   │◄──►│   (FastAPI)     │◄──►│    (Ollama)     │
 │   Port: 8501    │    │   Port: 8000    │    │  Port: 11434    │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
          │                       │                       │
@@ -42,17 +42,10 @@ hugo-ai-studio/
 ├── 📖 README.md                 # This file
 ├── 🔧 Makefile                  # Build and deployment commands
 ├──
-├── 🎨 ai-hugo-frontend/         # Streamlit UI Application
-│   ├── Dockerfile
-│   ├── requirements.txt
-│   ├── app.py               # Main Streamlit application
-│   ├── components/          # UI components
-│   │   ├── site_config.py   # Site configuration form
-│   │   ├── content_generator.py  # Content generation interface
-│   │   └── preview.py       # Live preview component
-│   └── utils/
-│       ├── llm_client.py    # Ollama client wrapper
-│       └── hugo_generator.py # Hugo site generation logic
+├── 🎨 simple-frontend/          # HTML/JavaScript UI Application
+│   ├── Dockerfile           # Nginx container for static files
+│   ├── index.html           # Single-page application
+│   └── nginx.conf           # Nginx configuration
 │
 ├── ⚡ ai-hugo-backend/         # FastAPI Backend
 │   ├── Dockerfile
@@ -200,13 +193,14 @@ location ~ ^/sites/([^/]+)/?(.*)$ {
 
 ### Core Components
 
-### 1. Frontend (Streamlit) - Port 8501
-**Beautiful, intuitive interface for site creation**
+### 1. Frontend (HTML/JavaScript) - Port 8501
+**Beautiful, intuitive single-page interface for site creation**
 
 - **Site Configuration**: Form-based setup for site details
 - **Content Generation**: AI-powered content creation interface
 - **Live Preview**: Real-time site preview and management
 - **Responsive Design**: Works on desktop and mobile
+- **No Framework Dependencies**: Pure HTML/CSS/JavaScript
 
 ### 2. Backend (FastAPI) - Port 8000
 **RESTful API for site generation and management**
@@ -254,9 +248,8 @@ OLLAMA_PORT=11434
 BACKEND_URL=http://backend:8000
 LLM_URL=http://ollama:11434
 
-# Streamlit Configuration
-STREAMLIT_SERVER_ADDRESS=0.0.0.0
-STREAMLIT_SERVER_PORT=8501
+# Frontend Configuration
+FRONTEND_PORT=8501
 
 # FastAPI Configuration
 FASTAPI_HOST=0.0.0.0
@@ -623,7 +616,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - **Hugo**: Fast and flexible static site generator
 - **Ollama**: Local LLM inference engine
-- **Streamlit**: Beautiful web app framework
+- **HTML/CSS/JavaScript**: Clean, dependency-free frontend
 - **FastAPI**: Modern, fast web framework for APIs
 - **Docker**: Containerization platform
 - **Nginx**: High-performance web server
@@ -631,7 +624,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 📊 Project Stats
 
 - **Languages**: Python, JavaScript, HTML, CSS
-- **Frameworks**: FastAPI, Streamlit, Hugo
+- **Frameworks**: FastAPI, Hugo
 - **Container**: Docker, Docker Compose
 - **AI Models**: Ollama (llama3.2, codellama, etc.)
 - **Web Server**: Nginx with custom configuration
