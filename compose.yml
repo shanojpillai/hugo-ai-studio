@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  # React Frontend - Simple Chat UI
+  frontend:
+    build: ./frontend
+    ports:
+      - "3001:3000"
+    environment:
+      - REACT_APP_API_URL=http://43.192.149.110:8000
+    depends_on:
+      - backend
+    networks:
+      - hugo-network
+
+  # FastAPI Backend - AI + Hugo + Database
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    environment:
+      - OLLAMA_URL=http://ollama:11434
+      - DATABASE_PATH=/app/data/sites.db
+    depends_on:
+      - ollama
+    volumes:
+      - ./data:/app/data
+      - ./generated-sites:/app/sites
+    networks:
+      - hugo-network
+
+  # Ollama LLM Service
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ./ollama-data:/root/.ollama
+    networks:
+      - hugo-network
+
+  # Nginx - Serve Generated Sites
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "8080:80"
+    volumes:
+      - ./generated-sites:/usr/share/nginx/html/sites:ro
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - backend
+    networks:
+      - hugo-network
+
+networks:
+  hugo-network:
+    driver: bridge
