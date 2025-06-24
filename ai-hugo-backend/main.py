@@ -83,6 +83,9 @@ class ContentGenerationRequest(BaseModel):
     tone: str
     siteConfig: Dict[str, Any]
 
+class ChatCreateRequest(BaseModel):
+    description: str
+
 @app.get("/health")
 async def health_check():
     """Health check endpoint"""
@@ -273,6 +276,140 @@ Generated on: {site_row[5]}
             media_type="application/zip",
             headers={"Content-Disposition": f"attachment; filename={site_row[1].replace(' ', '-')}-hugo-site.zip"}
         )
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/create-from-description")
+async def create_from_description(request: ChatCreateRequest) -> Dict[str, Any]:
+    """Create a complete website from natural language description"""
+    try:
+        # Use LLM to analyze the description and extract site details
+        analysis_prompt = f"""
+        Analyze this website description and extract the key information:
+        "{request.description}"
+
+        Return a JSON object with:
+        - siteName: A catchy name for the website
+        - siteDescription: A professional description
+        - themeType: one of "blog", "portfolio", "business", "documentation"
+        - mainSections: array of relevant sections like ["About", "Blog", "Contact", "Services", "Portfolio"]
+        - contentIdeas: array of 3-5 content pieces to create with titles and descriptions
+
+        Make it professional and relevant to the user's request.
+        Return only valid JSON.
+        """
+
+        analysis_result = await llm_service.generate_content(analysis_prompt, {"model": "llama3.2"})
+
+        # Parse the LLM response
+        import json
+        try:
+            site_config = json.loads(analysis_result)
+        except:
+            # Fallback if JSON parsing fails
+            site_config = {
+                "siteName": "My AI Website",
+                "siteDescription": request.description,
+                "themeType": "blog",
+                "mainSections": ["About", "Blog", "Contact"],
+                "contentIdeas": [
+                    {"title": "Welcome", "description": "Welcome page content"}
+                ]
+            }
+
+        # Create the site
+        site_id = str(uuid.uuid4())
+
+        # Store in database
+        conn = sqlite3.connect('/app/data/sites.db')
+        cursor = conn.cursor()
+
+        cursor.execute('''
+            INSERT INTO sites (id, site_name, site_description, theme_type, main_sections, status)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ''', (
+            site_id,
+            site_config.get("siteName", "My AI Website"),
+            site_config.get("siteDescription", request.description),
+            site_config.get("themeType", "blog"),
+            json.dumps(site_config.get("mainSections", ["About", "Blog"])),
+            'creating'
+        ))
+
+        conn.commit()
+        conn.close()
+
+        # Create Hugo site
+        hugo_config = {
+            "site_name": site_config.get("siteName", "My AI Website"),
+            "site_description": site_config.get("siteDescription", request.description),
+            "theme_type": site_config.get("themeType", "blog"),
+            "main_sections": site_config.get("mainSections", ["About", "Blog"])
+        }
+
+        success = await hugo_service.create_site(site_id, hugo_config)
+
+        if not success:
+            raise Exception("Failed to create Hugo site")
+
+        # Generate content for each idea
+        content_ideas = site_config.get("contentIdeas", [])
+        for idea in content_ideas[:3]:  # Limit to 3 pieces of content
+            content_prompt = f"""
+            Create {idea.get('description', 'content')} for a website about: {request.description}
+
+            Title: {idea.get('title', 'Welcome')}
+
+            Write engaging, professional content in Markdown format.
+            Include appropriate headings, paragraphs, and formatting.
+            Make it relevant to the website theme and description.
+            """
+
+            generated_content = await llm_service.generate_content(content_prompt, {"model": "llama3.2"})
+
+            if generated_content:
+                # Save content to database
+                conn = sqlite3.connect('/app/data/sites.db')
+                cursor = conn.cursor()
+
+                cursor.execute('''
+                    INSERT INTO content (site_id, content_type, title, content, tone)
+                    VALUES (?, ?, ?, ?, ?)
+                ''', (
+                    site_id,
+                    "Page",
+                    idea.get('title', 'Welcome'),
+                    generated_content,
+                    "Professional"
+                ))
+
+                conn.commit()
+                conn.close()
+
+                # Update Hugo site
+                await hugo_service.update_content(
+                    site_id,
+                    {idea.get('title', 'welcome').lower().replace(" ", "_"): generated_content}
+                )
+
+        # Build the site
+        await hugo_service.build_site(site_id)
+
+        # Update status
+        conn = sqlite3.connect('/app/data/sites.db')
+        cursor = conn.cursor()
+        cursor.execute('UPDATE sites SET status = ? WHERE id = ?', ('ready', site_id))
+        conn.commit()
+        conn.close()
+
+        return {
+            "siteId": site_id,
+            "siteName": site_config.get("siteName", "My AI Website"),
+            "siteDescription": site_config.get("siteDescription", request.description),
+            "previewUrl": f"http://43.192.149.110:8080/sites/{site_id}/",
+            "status": "ready"
+        }
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

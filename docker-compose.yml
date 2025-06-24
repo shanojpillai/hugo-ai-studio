@@ -3,10 +3,12 @@ version: '3.8'
 services:
   frontend:
     build:
-      context: ./simple-frontend
+      context: ./frontend
       dockerfile: Dockerfile
     ports:
       - "8501:80"
+    environment:
+      - REACT_APP_API_URL=http://43.192.149.110:8000
     depends_on:
       - backend
     networks:
