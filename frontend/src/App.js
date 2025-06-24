@@ -2,19 +2,18 @@ import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
 
-const API_BASE = 'http://43.192.149.110:8000';
+const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
 function App() {
   const [messages, setMessages] = useState([
     {
       id: 1,
       type: 'bot',
-      content: "👋 Hi! I'm your AI website builder. Just tell me what kind of website you want to create and I'll build it for you!\n\nFor example:\n• \"Create a tech blog about AI and machine learning\"\n• \"Build a portfolio website for a photographer\"\n• \"Make a business website for a restaurant\""
+      content: "👋 Hi! I'm your AI website builder. Just tell me what kind of website you want to create!\n\nFor example:\n• \"Create a tech blog about AI\"\n• \"Build a portfolio for a photographer\"\n• \"Make a restaurant website\""
     }
   ]);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [currentSite, setCurrentSite] = useState(null);
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -25,11 +24,12 @@ function App() {
     scrollToBottom();
   }, [messages]);
 
-  const addMessage = (type, content) => {
+  const addMessage = (type, content, siteData = null) => {
     const newMessage = {
       id: Date.now(),
       type,
       content,
+      siteData,
       timestamp: new Date()
     };
     setMessages(prev => [...prev, newMessage]);
@@ -50,22 +50,19 @@ function App() {
     setIsLoading(true);
 
     try {
-      // Step 1: Create site based on user description
-      const siteResponse = await axios.post(`${API_BASE}/api/create-from-description`, {
+      const response = await axios.post(`${API_BASE}/api/create-website`, {
         description: userMessage
       });
 
-      const site = siteResponse.data;
-      setCurrentSite(site);
+      const site = response.data;
 
       // Update loading message with success
       setMessages(prev => prev.map(msg => 
         msg.id === loadingMessage.id 
           ? {
               ...msg,
-              content: `✅ **${site.siteName}** created successfully!\n\n🌐 **Preview**: [View your website](http://43.192.149.110:8080/sites/${site.siteId}/)\n\n📥 **Download**: Click the download button below to get your complete website files.`,
-              siteId: site.siteId,
-              siteName: site.siteName
+              content: `✅ **${site.siteName}** created successfully!\n\n🌐 Your website is live and ready!\n📥 Download your complete website files below.`,
+              siteData: site
             }
           : msg
       ));
@@ -73,14 +70,13 @@ function App() {
       toast.success('Website created successfully!');
 
     } catch (error) {
-      console.error('Error creating website:', error);
+      console.error('Error:', error);
       
-      // Update loading message with error
       setMessages(prev => prev.map(msg => 
         msg.id === loadingMessage.id 
           ? {
               ...msg,
-              content: `❌ Sorry, I couldn't create your website. Error: ${error.response?.data?.detail || error.message}\n\nPlease try again with a different description.`
+              content: `❌ Sorry, I couldn't create your website.\n\nError: ${error.response?.data?.detail || error.message}\n\nPlease try again!`
             }
           : msg
       ));
@@ -95,14 +91,14 @@ function App() {
     try {
       toast.loading('Preparing download...');
       
-      const response = await axios.get(`${API_BASE}/api/sites/${siteId}/download`, {
+      const response = await axios.get(`${API_BASE}/api/download/${siteId}`, {
         responseType: 'blob'
       });
       
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `${siteName.replace(/\s+/g, '-')}-hugo-site.zip`);
+      link.setAttribute('download', `${siteName.replace(/\s+/g, '-')}-website.zip`);
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -154,19 +150,19 @@ function App() {
                 >
                   <div className="whitespace-pre-wrap">{message.content}</div>
                   
-                  {/* Download button for bot messages with siteId */}
-                  {message.type === 'bot' && message.siteId && (
+                  {/* Action buttons for bot messages with site data */}
+                  {message.type === 'bot' && message.siteData && (
                     <div className="mt-3 flex gap-2">
                       <a
-                        href={`http://43.192.149.110:8080/sites/${message.siteId}/`}
+                        href={`http://43.192.149.110:8080/sites/${message.siteData.siteId}/`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 transition-colors"
                       >
-                        🌐 Open Website
+                        🌐 View Website
                       </a>
                       <button
-                        onClick={() => handleDownload(message.siteId, message.siteName)}
+                        onClick={() => handleDownload(message.siteData.siteId, message.siteData.siteName)}
                         className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700 transition-colors"
                       >
                         📥 Download ZIP
@@ -207,13 +203,13 @@ function App() {
 
         {/* Examples */}
         <div className="mt-6 bg-white rounded-lg shadow-lg p-6">
-          <h3 className="text-lg font-semibold mb-3">💡 Example Requests:</h3>
+          <h3 className="text-lg font-semibold mb-3">💡 Try these examples:</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {[
-              "Create a tech blog about artificial intelligence and machine learning",
-              "Build a portfolio website for a graphic designer",
-              "Make a business website for a local restaurant with menu",
-              "Create a documentation site for a software project"
+              "Create a tech blog about artificial intelligence",
+              "Build a portfolio website for a photographer",
+              "Make a business website for a coffee shop",
+              "Create a documentation site for developers"
             ].map((example, index) => (
               <button
                 key={index}
