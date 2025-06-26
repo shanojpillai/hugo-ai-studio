@@ -3,6 +3,7 @@
 **Create beautiful websites with AI through simple chat interface**
 
 Hugo AI Studio is a modern web application that lets users create complete websites by simply describing what they want in natural language. The AI analyzes the description and generates a fully functional Hugo website with custom content.
+![image](https://github.com/user-attachments/assets/b11e2a1f-2541-4253-a356-1d874e2cecf6)
 
 ## ✨ Features
 
